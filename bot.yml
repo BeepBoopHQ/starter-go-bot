@@ -1,0 +1,8 @@
+name: gobot
+description: A simple Go bot sample for Beep Boop
+avatar: avatar.jpg
+config:
+  - name: OPTION
+    friendlyName: Some Unnecessary Option
+    info: This is an unnecessary option
+    default: the default value

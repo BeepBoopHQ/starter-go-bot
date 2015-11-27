@@ -15,25 +15,24 @@ type Bot struct {
 	MeID string
 }
 
-func (b *Bot) random(max int) int {
-	rand.Seed(time.Now().Unix())
-	return rand.Intn(max)
+func (b *Bot) SetMe(user *slack.UserDetails) {
+	b.MeID = user.ID
+	log.Printf("Connect! I am %s (%s)\n", user.Name, user.ID)
 }
 
-func (b *Bot) setMe(id string) {
-	b.MeID = id
-	log.Println("Connected as " + id)
-}
-
-func (b *Bot) isMe(id string) bool {
+func (b *Bot) IsMe(id string) bool {
 	return b.MeID == id
 }
 
-func (b *Bot) amIMentioned(text string) bool {
+func (b *Bot) IsDM(channel string) bool {
+	return regexp.MustCompile("^D.*").MatchString(channel)
+}
+
+func (b *Bot) AmIMentioned(text string) bool {
 	return regexp.MustCompile("<@" + b.MeID + ">").MatchString(text)
 }
 
-func (b *Bot) returnGreeting(name string) string {
+func (b *Bot) ReturnGreeting(name string) string {
 	greetings := []string{
 		"Good day to you Governor!",
 		"Oh, yes! Good day!",
@@ -44,7 +43,11 @@ func (b *Bot) returnGreeting(name string) string {
 		":hear_no_evil: :see_no_evil: :speak_no_evil: ",
 	}
 
-	return greetings[b.random(len(greetings))]
+	return greetings[rand.Intn(len(greetings))]
+}
+
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 func main() {
@@ -65,11 +68,14 @@ Loop:
 		case msg := <-rtm.IncomingEvents:
 			switch ev := msg.Data.(type) {
 			case *slack.ConnectedEvent:
-				bot.setMe(ev.Info.User.ID)
+				bot.SetMe(ev.Info.User)
 
 			case *slack.MessageEvent:
-				if bot.amIMentioned(ev.Msg.Text) {
-					rtm.SendMessage(rtm.NewOutgoingMessage(bot.returnGreeting(ev.Msg.User), ev.Channel))
+				// if I'm sent a DM or mentioned return a random greeting
+				if bot.AmIMentioned(ev.Msg.Text) || (bot.IsDM(ev.Channel) && !bot.IsMe(ev.Msg.User)) {
+					log.Printf("Received message \"%s\" from %s", ev.Msg.Text, ev.Msg.User)
+					rtm.SendMessage(rtm.NewOutgoingMessage(bot.ReturnGreeting(ev.Msg.User), ev.Channel))
+					log.Printf("I was courteous to %s\n", ev.Msg.User)
 				}
 
 			case *slack.RTMError:
