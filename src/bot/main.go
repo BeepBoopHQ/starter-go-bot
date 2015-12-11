@@ -34,7 +34,7 @@ func (b *Bot) AmIMentioned(text string) bool {
 
 func (b *Bot) ReturnGreeting(name string) string {
 	greetings := []string{
-		"Good day to you Governor!",
+		"Good day to you from https://beepboophq.com!",
 		"Oh, yes! Good day!",
 		"Greetings, it is better to be alone than in bad company",
 		"I'm not much for pleasantries today :sob:",
