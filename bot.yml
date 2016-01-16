@@ -1,3 +1,17 @@
-name: gobot
-description: A simple Go bot sample for Beep Boop
-avatar: avatar.jpg
+name: Beepboop Starterbot
+description: A simple Go bot starter for Beep Boop
+avatar: avatar.png
+#background: images/background.png
+#config:
+#  - name: OPTION
+#    friendly_name: Some Unnecessary Option
+#    info: This is an unnecessary option
+#    default: the default value
+#  - name: SECRET
+#    friendly_name: Shhhh
+#    info: This is an secret option
+#    type: secret
+#    default: not secret though
+#screenshots:
+#  - screenshot: images/screenshot1.png
+#  - screenshot: images/screenshot2.jpg

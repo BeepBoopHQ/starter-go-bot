@@ -2,89 +2,82 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
-	"regexp"
 	"time"
 
+	slackbot "github.com/BeepBoopHQ/go-slackbot"
 	"github.com/nlopes/slack"
+	"golang.org/x/net/context"
 )
 
-type Bot struct {
-	MeID string
-}
+const (
+	WithTyping    = slackbot.WithTyping
+	WithoutTyping = slackbot.WithoutTyping
 
-func (b *Bot) SetMe(user *slack.UserDetails) {
-	b.MeID = user.ID
-	log.Printf("Connect! I am %s (%s)\n", user.Name, user.ID)
-}
+	HelpText = "I will respond to the following messages: \n" +
+		"`bot hi` for a simple message.\n" +
+		"`bot attachment` to see a Slack attachment message.\n" +
+		"`hey @<your bot's name>` to demonstrate detecting a mention.\n" +
+		"`bot help` to see this again."
+)
 
-func (b *Bot) IsMe(id string) bool {
-	return b.MeID == id
-}
-
-func (b *Bot) IsDM(channel string) bool {
-	return regexp.MustCompile("^D.*").MatchString(channel)
-}
-
-func (b *Bot) AmIMentioned(text string) bool {
-	return regexp.MustCompile("<@" + b.MeID + ">").MatchString(text)
-}
-
-func (b *Bot) ReturnGreeting(name string) string {
-	greetings := []string{
-		"Good day to you from https://beepboophq.com!",
-		"Oh, yes! Good day!",
-		"Greetings, it is better to be alone than in bad company",
-		"I'm not much for pleasantries today :sob:",
-		fmt.Sprintf("Hello <@%s>", name),
-		fmt.Sprintf("Mother of the queen you're chipper today, <@%s>", name),
-		":hear_no_evil: :see_no_evil: :speak_no_evil: ",
-	}
-
-	return greetings[rand.Intn(len(greetings))]
-}
-
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-}
+var greetingPrefixes = []string{"Hi", "Hello", "Howdy", "Wazzzup", "Hey"}
 
 func main() {
-	token := os.Getenv("SLACK_TOKEN")
-	if token == "" {
-		log.Fatal("SLACK_TOKEN is required")
+	bot := slackbot.New(os.Getenv("SLACK_TOKEN"))
+
+	toMe := bot.Messages(slackbot.DirectMessage, slackbot.DirectMention).Subrouter()
+
+	hi := "hi|hello|bot hi|bot hello"
+	toMe.Hear(hi).MessageHandler(HelloHandler)
+	bot.Hear(hi).MessageHandler(HelloHandler)
+	bot.Hear("help|bot help").MessageHandler(HelpHandler)
+	bot.Hear("attachment|bot attachment").MessageHandler(AttachmentsHandler)
+	bot.Hear(`<@([a-zA-z0-9]+)?>`).MessageHandler(MentionHandler)
+	bot.Hear("(bot ).*").MessageHandler(CatchAllHandler)
+	bot.Run()
+}
+
+func HelloHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
+	rand.Seed(time.Now().UnixNano())
+	msg := greetingPrefixes[rand.Intn(len(greetingPrefixes))] + " <@" + evt.User + ">!"
+	bot.Reply(evt, msg, WithTyping)
+
+	if slackbot.IsDirectMessage(evt) {
+		dmMsg := "It's nice to talk to you directly."
+		bot.Reply(evt, dmMsg, WithoutTyping)
+	}
+}
+
+func CatchAllHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
+	msg := fmt.Sprintf("I'm sorry, I don't know how to: `%s`.\n%s", evt.Text, HelpText)
+	bot.Reply(evt, msg, WithTyping)
+}
+
+func MentionHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
+	if slackbot.IsMentioned(evt, bot.BotUserID()) {
+		bot.Reply(evt, "You really do care about me. :heart:", WithTyping)
+	}
+}
+
+func HelpHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
+	bot.Reply(evt, HelpText, WithTyping)
+}
+
+func AttachmentsHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
+	txt := "Beep Beep Boop is a ridiculously simple hosting platform for your Slackbots."
+	attachment := slack.Attachment{
+		Pretext:   "We bring bots to life. :sunglasses: :thumbsup:",
+		Title:     "Host, deploy and share your bot in seconds.",
+		TitleLink: "https://beepboophq.com/",
+		Text:      txt,
+		Fallback:  txt,
+		ImageURL:  "https://storage.googleapis.com/beepboophq/_assets/bot-1.22f6fb.png",
+		Color:     "#7CD197",
 	}
 
-	api := slack.New(token)
-	bot := Bot{}
-
-	rtm := api.NewRTM()
-	go rtm.ManageConnection()
-
-Loop:
-	for {
-		select {
-		case msg := <-rtm.IncomingEvents:
-			switch ev := msg.Data.(type) {
-			case *slack.ConnectedEvent:
-				bot.SetMe(ev.Info.User)
-
-			case *slack.MessageEvent:
-				// if I'm sent a DM or mentioned return a random greeting
-				if bot.AmIMentioned(ev.Msg.Text) || (bot.IsDM(ev.Channel) && !bot.IsMe(ev.Msg.User)) {
-					log.Printf("Received message \"%s\" from %s", ev.Msg.Text, ev.Msg.User)
-					rtm.SendMessage(rtm.NewOutgoingMessage(bot.ReturnGreeting(ev.Msg.User), ev.Channel))
-					log.Printf("I was courteous to %s\n", ev.Msg.User)
-				}
-
-			case *slack.RTMError:
-				log.Printf("Error: %s\n", ev.Error())
-
-			case *slack.InvalidAuthEvent:
-				log.Fatal("Invalid credentials")
-				break Loop
-			}
-		}
-	}
+	// supports multiple attachments
+	attachments := []slack.Attachment{attachment}
+	bot.ReplyWithAttachments(evt, attachments, WithTyping)
 }
