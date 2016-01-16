@@ -1,4 +1,4 @@
-FROM golang:1.5
+FROM golang:1.5-alpine
 
 ADD vendor/src /go/src
 ADD src /go/src
