@@ -48,6 +48,8 @@ func HelloHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEven
 		dmMsg := "It's nice to talk to you directly."
 		bot.Reply(evt, dmMsg, WithoutTyping)
 	}
+
+	bot.Reply(evt, "If you'd like to talk some more, "+HelpText, WithTyping)
 }
 
 func CatchAllHandler(ctx context.Context, bot *slackbot.Bot, evt *slack.MessageEvent) {
