@@ -1,7 +1,7 @@
 name: Beepboop Starterbot
 description: A simple Go bot starter for Beep Boop
-avatar: avatar.png
-#background: images/background.png
+avatar: resources/avatar.jpg
+#background: resources/background.png
 #config:
 #  - name: OPTION
 #    friendly_name: Some Unnecessary Option
@@ -13,5 +13,5 @@ avatar: avatar.png
 #    type: secret
 #    default: not secret though
 #screenshots:
-#  - screenshot: images/screenshot1.png
-#  - screenshot: images/screenshot2.jpg
+#  - screenshot: resources/screenshot1.png
+#  - screenshot: resources/screenshot2.jpg
