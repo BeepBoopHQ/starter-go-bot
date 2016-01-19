@@ -2,6 +2,12 @@
 	"version": 0,
 	"dependencies": [
 		{
+			"importpath": "github.com/chris-skud/go-wit",
+			"repository": "https://github.com/chris-skud/go-wit",
+			"revision": "c5c44784af9f70ebeb2b5008fbdfab346ec0acaf",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/nlopes/slack",
 			"repository": "https://github.com/nlopes/slack",
 			"revision": "4a9ff5f6ed8bb0df51620f49ee90fc0858a2913e",
