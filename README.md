@@ -3,7 +3,7 @@
 ## Overview
 A simple starting point for creating a Beep Boop hostable, Go based Slack bot.
 
-Visit [Beep Boop](https://beepboophq.com/docs/article/overview) to get the scoop on the the Beep Boop hosting platform. The Slack API documentation can be found [here](https://api.slack.com/).
+Visit [Beep Boop](https://beepboophq.com/docs/article/overview) to get the scoop on the Beep Boop hosting platform. The Slack API documentation can be found [here](https://api.slack.com/).
 
 ## Assumptions
 * You have already signed up with [Beep Boop](https://beepboophq.com) and have a local fork of this project.
